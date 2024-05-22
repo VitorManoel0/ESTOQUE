@@ -1,5 +1,18 @@
-import "@/styles/globals.css";
+import { ChakraProvider } from '@chakra-ui/react'
+import { SidebarProvider } from '../contexts/SidebarContext'
+import store from '@/store'
+import { Provider } from 'react-redux'
 
-export default function App({ Component, pageProps }) {
-  return <Component {...pageProps} />;
+function MyApp({ Component, pageProps }) {
+  return (
+    <Provider store={store}>
+      <ChakraProvider>
+        <SidebarProvider>
+          <Component {...pageProps} />
+        </SidebarProvider>
+      </ChakraProvider>
+    </Provider>
+  )
 }
+
+export default MyApp
