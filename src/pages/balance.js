@@ -1,10 +1,7 @@
 import {
   Box,
-  Button,
   Flex,
   Input,
-  Select,
-  SimpleGrid,
   Table,
   Tbody,
   Td,
@@ -15,67 +12,43 @@ import {
 import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
+import api from '../../services/api'
 
 const Balance = () => {
   const [listProducts, setListProducts] = useState([])
-  const [productFiltered, setProductFiltered] = useState('')
-  const [cmbProducts, setCmbProducts] = useState([])
+  const [filteredProducts, setFilteredProducts] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const BuildBalanceArray = () => {
-    const db_stock_outputs = localStorage.getItem('db_stock_outputs')
-      ? JSON.parse(localStorage.getItem('db_stock_outputs'))
-      : []
-
-    const db_stock_entries = localStorage.getItem('db_stock_entries')
-      ? JSON.parse(localStorage.getItem('db_stock_entries'))
-      : []
-
-    const db_products = localStorage.getItem('db_products')
-      ? JSON.parse(localStorage.getItem('db_products'))
-      : []
-
-    const newArray = []
-
-    db_products.map((prod) => {
-      const entries = db_stock_entries
-        .filter((item) => item.product_id === prod.id)
-        .map((entry) => Number(entry.amount))
-        .reduce((acc, cur) => acc + cur, 0)
-
-      const outputs = db_stock_outputs
-        .filter((item) => item.product_id === prod.id)
-        .map((entry) => Number(entry.amount))
-        .reduce((acc, cur) => acc + cur, 0)
-
-      const total = Number(entries) - Number(outputs)
-
-      newArray.push({
+  const fetchProducts = async () => {
+    try {
+      const { data } = await api.get('/listar_produtos_estoque') //
+      const productsWithBalance = data.map((prod) => ({
         product_id: prod.id,
         product_name: prod.name,
-        amount: total,
-      })
-
-      setListProducts(newArray)
-      setCmbProducts(newArray)
-    })
+        amount: prod.quantity || 0, 
+      }))
+      setListProducts(productsWithBalance)
+      setFilteredProducts(productsWithBalance)
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error)
+    }
   }
 
   useEffect(() => {
-    BuildBalanceArray()
+    fetchProducts()
   }, [])
 
-  const handleFilterProducts = () => {
-    if (!productFiltered) {
-      setListProducts(cmbProducts)
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredProducts(listProducts)
       return
     }
 
-    const newArray = cmbProducts.filter(
-      (item) => item.product_id === productFiltered
+    const newFilteredProducts = listProducts.filter((item) =>
+      item.product_name.toLowerCase().includes(searchTerm.toLowerCase())
     )
-
-    setListProducts(newArray)
-  }
+    setFilteredProducts(newFilteredProducts)
+  }, [searchTerm, listProducts])
 
   return (
     <Flex h="100vh" flexDirection="column">
@@ -85,24 +58,13 @@ const Balance = () => {
         <Sidebar />
 
         <Box w="100%">
-          <SimpleGrid minChildWidth={240} h="fit-content" spacing="6">
-            <Select
-              value={productFiltered}
-              onChange={(e) => setProductFiltered(e.target.value)}
-            >
-              <option value="">Selecione um item</option>
-              {cmbProducts &&
-                cmbProducts.length > 0 &&
-                cmbProducts.map((item, i) => (
-                  <option key={i} value={item.product_id}>
-                    {item.product_name}
-                  </option>
-                ))}
-            </Select>
-            <Button w="40" onClick={handleFilterProducts}>
-              FILTRAR
-            </Button>
-          </SimpleGrid>
+          <Box mb="6">
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Digite o nome do produto"
+            />
+          </Box>
 
           <Box overflowY="auto" height="80vh">
             <Table mt="6">
@@ -117,7 +79,7 @@ const Balance = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                {listProducts.map((item, i) => (
+                {filteredProducts.map((item, i) => (
                   <Tr key={i}>
                     <Td color="gray.500">{item.product_name}</Td>
                     <Td color="gray.500">{item.amount}</Td>

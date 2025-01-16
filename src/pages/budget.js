@@ -24,9 +24,9 @@ const Orders = () => {
   const [orderItems, setOrderItems] = useState([])
   const [listClients, setListClients] = useState([])
   const [listProducts, setListProducts] = useState([])
+  const [budgets, setBudgets] = useState([])
 
   useEffect(() => {
-    // Fetch clientes
     const fetchClients = async () => {
       try {
         const { data } = await api.get('/listar_clientes')
@@ -36,7 +36,15 @@ const Orders = () => {
       }
     }
 
-    // Fetch produtos
+    const fetchBudgets = async () => {
+      try {
+        const { data } = await api.get('/listar_budgets')
+        setBudgets(data)
+      } catch (error) {
+        console.error('Erro ao buscar orçamentos:', error)
+      }
+    }
+
     const fetchProducts = async () => {
       try {
         const { data } = await api.get('/listar_produtos')
@@ -48,8 +56,7 @@ const Orders = () => {
 
     fetchClients()
     fetchProducts()
-
-    console.log(listClients)
+    fetchBudgets()
   }, [])
 
   const handleAddItem = () => {
@@ -61,7 +68,6 @@ const Orders = () => {
       (item) => item.product_id === product_id
     )
     if (existingItem) {
-      // Atualizar a quantidade do item existente
       setOrderItems(
         orderItems.map((item) =>
           item.product_id === product_id
@@ -70,7 +76,6 @@ const Orders = () => {
         )
       )
     } else {
-      // Adicionar novo item à lista de itens do pedido
       setOrderItems([...orderItems, { product_id, amount }])
     }
 
@@ -87,8 +92,6 @@ const Orders = () => {
       return alert('Selecione um cliente e adicione itens ao pedido!')
     }
 
-    console.log(orderItems, 'orderItems')
-
     const newOrder = {
       client_id,
       items: orderItems.map((item) => ({
@@ -98,27 +101,68 @@ const Orders = () => {
     }
 
     try {
-      const response = await api.post('/create_orders', newOrder)
-
-      if (response.status == 200){
-        alert('Pedido salvo com sucesso!')
-        console.log(response.data)
-      }
-
-
-      // Limpar os campos
+      await api.post('/create_budget', newOrder)
       setClientId('0')
       setOrderItems([])
+      const { data } = await api.get('/listar_budgets')
+      setBudgets(data)
     } catch (error) {
-      alert(error.response.data.detail)
+      console.error('Erro ao salvar pedido:', error)
+      alert('Erro ao salvar pedido.')
+    }
+  }
+
+  const handleExportPDF = async (budgetId) => {
+    try {
+      // Faz a requisição POST para a API
+      const response = await api.post(`/export_pdf/${budgetId}`, null, {
+        responseType: 'blob', // Garante que a resposta seja um blob (para arquivos)
+      })
+
+      // Converte o blob em um URL temporário
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `orcamento_${budgetId}.pdf` // Define o nome do arquivo
+      document.body.appendChild(link)
+      link.click()
+
+      // Remove o link após o uso
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      console.log('PDF baixado com sucesso')
+    } catch (error) {
+      console.error('Erro ao exportar o PDF:', error)
+    }
+  }
+
+  const handleApproveBudget = async (budgetId) => {
+    await api.patch(`/update_budget/${budgetId}`)
+    const { data } = await api.get('/listar_budgets')
+    setBudgets(data)
+  }
+
+  const handleDeleteBudget = async (budgetId) => {
+    try {
+      await api.delete(`/delete_budget/${budgetId}`)
+      const { data } = await api.get('/listar_budgets')
+      setBudgets(data)
+    } catch (error) {
+      console.error('Erro ao excluir orçamento:', error)
+      alert('Erro ao excluir orçamento.')
     }
   }
 
   const getProductById = (id) => {
-    return (
-      listProducts.find((product) => product.id == id)?.name ||
+    console.log(listProducts, 'a')
+    const response =
+      listProducts.find((product) => product.id == id).name ||
       'Produto não encontrado'
-    )
+
+    console.log(response)
+
+    return response
   }
 
   return (
@@ -130,7 +174,6 @@ const Orders = () => {
 
         <Box w="100%">
           <SimpleGrid minChildWidth={240} h="fit-content" spacing="6">
-            {/* Seleção do Cliente */}
             <Select
               value={client_id}
               onChange={(e) => setClientId(e.target.value)}
@@ -143,7 +186,6 @@ const Orders = () => {
               ))}
             </Select>
 
-            {/* Seleção do Produto */}
             <Select
               value={product_id}
               onChange={(e) => setProductId(e.target.value)}
@@ -156,7 +198,6 @@ const Orders = () => {
               ))}
             </Select>
 
-            {/* Quantidade */}
             <Input
               placeholder="Quantidade"
               type="number"
@@ -169,32 +210,23 @@ const Orders = () => {
             </Button>
           </SimpleGrid>
 
-          {/* Lista de Itens do Pedido */}
           <Box overflowY="auto" height="40vh">
             <Table mt="6">
               <Thead>
                 <Tr>
-                  <Th fontWeight="bold" fontSize="14px">
-                    Produto
-                  </Th>
-                  <Th fontWeight="bold" fontSize="14px">
-                    Quantidade
-                  </Th>
+                  <Th>Produto</Th>
+                  <Th>Quantidade</Th>
                   <Th></Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {orderItems.map((item, i) => (
                   <Tr key={i}>
-                    <Td color="gray.500">{getProductById(item.product_id)}</Td>
-                    <Td color="gray.500">{item.amount}</Td>
+                    <Td>{getProductById(item.product_id)}</Td>
+                    <Td>{item.amount}</Td>
                     <Td textAlign="end">
                       <Button
-                        p="2"
-                        h="auto"
-                        fontSize={11}
                         color="red.500"
-                        fontWeight="bold"
                         onClick={() => handleRemoveItem(item.product_id)}
                       >
                         REMOVER
@@ -206,10 +238,70 @@ const Orders = () => {
             </Table>
           </Box>
 
-          {/* Botão para Salvar o Pedido */}
           <Button mt="4" colorScheme="green" onClick={handleSaveOrder}>
             SALVAR PEDIDO
           </Button>
+
+          <Box mt="8">
+            <SimpleGrid columns={2} spacing={6}>
+              {budgets.map((budget) => (
+                <Box key={budget.pedido.id} p="4" shadow="md" borderWidth="1px">
+                  <Flex
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb="4"
+                  >
+                    <Box fontWeight="bold" fontSize="lg">
+                      Cliente: {budget.pedido.clientName}
+                    </Box>
+                    <Box fontSize="lg" color="gray.600">
+                      Valor: {budget.valor.toFixed(2)}
+                    </Box>
+                  </Flex>
+                  <Table size="sm">
+                    <Thead>
+                      <Tr>
+                        <Th>Produto</Th>
+                        <Th>Quantidade</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {budget.pedido.items.map((item, i) => (
+                        <Tr key={i}>
+                          <Td>{getProductById(item.product_id)}</Td>
+                          <Td>{item.amount}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                  <Box mt="4">
+                    <Button
+                      size="sm"
+                      mr="2"
+                      onClick={() => handleExportPDF(budget.pedido.id)}
+                    >
+                      Exportar PDF
+                    </Button>
+                    <Button
+                      size="sm"
+                      mr="2"
+                      colorScheme="green"
+                      onClick={() => handleApproveBudget(budget.pedido.id)}
+                    >
+                      Aprovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      onClick={() => handleDeleteBudget(budget.pedido.id)}
+                    >
+                      Apagar
+                    </Button>
+                  </Box>
+                </Box>
+              ))}
+            </SimpleGrid>
+          </Box>
         </Box>
       </Flex>
     </Flex>

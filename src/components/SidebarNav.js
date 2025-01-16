@@ -57,7 +57,27 @@ const SidebarNav = () => {
           >
             <Link href="/balance">
               <Text fontSize="md" fontWeight="medium" color="gray.500">
-                SALDO
+                ESTOQUE GERAL
+              </Text>
+            </Link>
+          </ChakraLink>
+        </Stack>
+      </Stack>
+      <Stack>
+        <Text fontSize="xs" fontWeight="bold" color="gray.400">
+          PEDIDOS
+        </Text>
+        <Stack>
+        <ChakraLink
+            _hover={{ bg: 'gray.100' }}
+            px="4"
+            py="2"
+            borderRadius={5}
+            bg={asPath === '/budget' ? 'gray.200' : ''}
+          >
+            <Link href="/budget">
+              <Text fontSize="md" fontWeight="medium" color="gray.500">
+                FAZER ORÇAMENTOS
               </Text>
             </Link>
           </ChakraLink>
@@ -70,7 +90,7 @@ const SidebarNav = () => {
           >
             <Link href="/stockEntries">
               <Text fontSize="md" fontWeight="medium" color="gray.500">
-                ENTRADAS
+                EFETUAR PEDIDOS
               </Text>
             </Link>
           </ChakraLink>
@@ -79,11 +99,11 @@ const SidebarNav = () => {
             px="4"
             py="2"
             borderRadius={5}
-            bg={asPath === '/stockOutputs' ? 'gray.200' : ''}
+            bg={asPath === '/viewbudget' ? 'gray.200' : ''}
           >
-            <Link href="/stockOutputs">
+            <Link href="/viewbudget">
               <Text fontSize="md" fontWeight="medium" color="gray.500">
-                SAÍDAS
+                VISUALIZAR PEDIDOS
               </Text>
             </Link>
           </ChakraLink>

@@ -12,142 +12,146 @@ import {
   Tr,
 } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
-import { setUsers, addUser, removeUser } from '../store/reducers/users'
-import InputMask from 'react-input-mask'
+import api from '../../services/api'
 
-function validateCPF(cpf) {
-  const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/
-  return cpfRegex.test(cpf)
-}
-
-function validateCNPJ(cnpj) {
-  const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/
-  return cnpjRegex.test(cnpj)
-}
-
-function InputWithValidation({ placeholder, ...rest }) {
-  const [value, setValue] = useState('')
-  const [isValid, setIsValid] = useState(true)
-  const [inputMask, setInputMask] = useState('') // Estado para controlar a máscara
-
-  const handleChange = (event) => {
-    const inputValue = event.target.value
-    setValue(inputValue)
-
-    // Determinar automaticamente a máscara com base no comprimento do valor inserido
-    if (inputValue.length <= 14) {
-      setInputMask('999.999.999-99') // CPF
-    } else {
-      setInputMask('99.999.999/9999-99') // CNPJ
-    }
-
-    // Validar CPF ou CNPJ
-    setIsValid(
-      inputMask.length === 14
-        ? validateCPF(inputValue)
-        : validateCNPJ(inputValue)
-    )
-  }
-
-  return (
-    <>
-      <InputMask mask={inputMask} value={value} onChange={handleChange}>
-        {(inputProps) => (
-          <Input
-            type="text"
-            placeholder={placeholder}
-            {...inputProps}
-            {...rest}
-          />
-        )}
-      </InputMask>
-      {!isValid && <p style={{ color: 'red' }}>Digite um CPF ou CNPJ válido</p>}
-    </>
-  )
-}
-const Users = () => {
-  const [userName, setUserName] = useState('')
-  const [userCpf, setUserCpf] = useState('')
-  const dispatch = useDispatch()
-  const listUsers = useSelector((state) => state.users) || []
+const Usuarios = () => {
+  const [name, setName] = useState('')
+  const [cpfCnpj, setCpfCnpj] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [listUsers, setListUsers] = useState([])
+  const [editingUserId, setEditingUserId] = useState(null)
+  const [editFields, setEditFields] = useState({
+    name: '',
+    cpfCnpj: '',
+    phone: '',
+    email: '',
+  })
 
   useEffect(() => {
-    const db_users = localStorage.getItem('db_users')
-      ? JSON.parse(localStorage.getItem('db_users'))
-      : []
+    fetchUsers()
+  }, [])
 
-    dispatch(setUsers(db_users))
-  }, [dispatch])
+  const fetchUsers = async () => {
+    try {
+      const { data } = await api.get('/listar_clientes')
+      setListUsers(data)
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error)
+    }
+  }
 
-  const handleNewUser = () => {
-    if (!userName) return
-    if (verifyUserName(userName)) {
-      alert('Usuário já cadastrado!')
+  const handleNewUser = async () => {
+    if (!name || !cpfCnpj || !phone || !email) {
+      alert('Todos os campos são obrigatórios!')
       return
     }
 
-    const id = Math.random().toString(36).substring(2)
-    const newUser = { id, name: userName }
-
-    dispatch(addUser(newUser))
-
-    localStorage.setItem('db_users', JSON.stringify([...listUsers, newUser]))
-
-    setUserName('')
+    try {
+      const newUser = {
+        nome: name,
+        cpf_cnpj: cpfCnpj,
+        telefone: phone,
+        email: email,
+      }
+      await api.post('/cadastrar_clientes', newUser)
+      fetchUsers()
+      setName('')
+      setCpfCnpj('')
+      setPhone('')
+      setEmail('')
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error)
+    }
   }
 
-  const names = []
-
-  names.push("Rena Estrada")
-  
-  const verifyUserName = (name) => {
-    return !!listUsers.find((user) => user.name === name)
+  const removeUser = async (id) => {
+    try {
+      await api.delete(`/apagar_clientes?id=${id}`)
+      fetchUsers()
+    } catch (error) {
+      console.error('Erro ao remover usuário:', error)
+    }
   }
 
-  const handleRemoveUser = (id) => {
-    const db_stock_outputs = localStorage.getItem('db_stock_outputs')
-      ? JSON.parse(localStorage.getItem('db_stock_outputs'))
-      : []
-    const db_stock_entries = localStorage.getItem('db_stock_entries')
-      ? JSON.parse(localStorage.getItem('db_stock_entries'))
-      : []
+  const startEditingUser = (user) => {
+    setEditingUserId(user.id)
+    setEditFields({
+      name: user.nome,
+      cpfCnpj: user.cpf_cnpj,
+      phone: user.telefone,
+      email: user.email,
+    })
+  }
 
-    const hasOutputs = db_stock_outputs.filter(
-      (item) => item.user_id === id
-    ).length
-    const hasEntries = db_stock_entries.filter(
-      (item) => item.user_id === id
-    ).length
+  const cancelEditing = () => {
+    setEditingUserId(null)
+    setEditFields({ name: '', cpfCnpj: '', phone: '', email: '' })
+  }
 
-    if (hasEntries || hasOutputs) {
-      alert('Esse usuário já existe!')
+  const saveUser = async (id) => {
+    if (!id) {
+      console.error('ID do usuário não encontrado')
       return
     }
 
-    dispatch(removeUser(id))
+    try {
+      const updatedUser = {
+        nome: editFields.name,
+        cpf_cnpj: editFields.cpfCnpj,
+        telefone: editFields.phone,
+        email: editFields.email,
+      }
 
-    const newArray = listUsers.filter((user) => user.id !== id)
-    localStorage.setItem('db_users', JSON.stringify(newArray))
+      await api.put(`/editar_cliente/${id}`, updatedUser)
+      setListUsers(
+        listUsers.map((user) =>
+          user.id === id
+            ? {
+                ...user,
+                nome: editFields.name,
+                cpf_cnpj: editFields.cpfCnpj,
+                telefone: editFields.phone,
+                email: editFields.email,
+              }
+            : user
+        )
+      )
+      cancelEditing()
+    } catch (error) {
+      console.error('Erro ao salvar usuário:', error)
+    }
   }
 
   return (
     <Flex h="100vh" flexDirection="column">
       <Header />
-
       <Flex w="100%" my="6" maxW={1120} mx="auto" px="6" h="100vh">
         <Sidebar />
-
         <Box w="100%">
           <SimpleGrid minChildWidth={240} h="fit-content" spacing="6">
             <Input
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Nome do usuário"
             />
-            <InputWithValidation placeholder="Digite um CPF ou CNPJ válido" />
+            <Input
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value)}
+              placeholder="CPF/CNPJ"
+            />
+            <Input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Telefone"
+            />
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+            />
             <Button w="40" onClick={handleNewUser}>
               CADASTRAR
             </Button>
@@ -157,28 +161,90 @@ const Users = () => {
             <Table mt="6">
               <Thead>
                 <Tr>
-                  <Th fontWeight="bold" fontSize="14px">
-                    Nome
-                  </Th>
+                  <Th>Nome</Th>
+                  <Th>CPF/CNPJ</Th>
+                  <Th>Telefone</Th>
+                  <Th>Email</Th>
                   <Th></Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {listUsers.map((item) => (
-                  <Tr key={item.id}>
-                    <Td color="gray.500">{item.name}</Td>
-                    <Td textAlign="end">
-                      <Button
-                        p="2"
-                        h="auto"
-                        fontSize={11}
-                        color="red.500"
-                        fontWeight="bold"
-                        onClick={() => handleRemoveUser(item.id)}
-                      >
-                        DELETAR
-                      </Button>
-                    </Td>
+                {listUsers.map((user) => (
+                  <Tr key={user.id}>
+                    {editingUserId === user.id ? (
+                      <>
+                        <Td>
+                          <Input
+                            value={editFields.name}
+                            onChange={(e) =>
+                              setEditFields((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }))
+                            }
+                          />
+                        </Td>
+                        <Td>
+                          <Input
+                            value={editFields.cpfCnpj}
+                            onChange={(e) =>
+                              setEditFields((prev) => ({
+                                ...prev,
+                                cpfCnpj: e.target.value,
+                              }))
+                            }
+                          />
+                        </Td>
+                        <Td>
+                          <Input
+                            value={editFields.phone}
+                            onChange={(e) =>
+                              setEditFields((prev) => ({
+                                ...prev,
+                                phone: e.target.value,
+                              }))
+                            }
+                          />
+                        </Td>
+                        <Td>
+                          <Input
+                            value={editFields.email}
+                            onChange={(e) =>
+                              setEditFields((prev) => ({
+                                ...prev,
+                                email: e.target.value,
+                              }))
+                            }
+                          />
+                        </Td>
+                        <Td>
+                          <Button colorScheme="blue" onClick={() => saveUser(user.id)}>
+                            SALVAR
+                          </Button>
+                          <Button colorScheme="gray" onClick={cancelEditing}>
+                            CANCELAR
+                          </Button>
+                        </Td>
+                      </>
+                    ) : (
+                      <>
+                        <Td>{user.nome}</Td>
+                        <Td>{user.cpf_cnpj}</Td>
+                        <Td>{user.telefone}</Td>
+                        <Td>{user.email}</Td>
+                        <Td>
+                          <Button
+                            colorScheme="yellow"
+                            onClick={() => startEditingUser(user)}
+                          >
+                            EDITAR
+                          </Button>
+                          <Button colorScheme="red" onClick={() => removeUser(user.id)}>
+                            DELETAR
+                          </Button>
+                        </Td>
+                      </>
+                    )}
                   </Tr>
                 ))}
               </Tbody>
@@ -190,4 +256,4 @@ const Users = () => {
   )
 }
 
-export default Users
+export default Usuarios
