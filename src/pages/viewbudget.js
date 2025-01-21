@@ -8,6 +8,8 @@ import {
   Th,
   Thead,
   Tr,
+  Select,
+  Button,
 } from '@chakra-ui/react'
 import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
@@ -16,7 +18,10 @@ import api from '../../services/api'
 
 const Orders = () => {
   const [listProducts, setListProducts] = useState([])
-  const [budgets, setBudgets] = useState([]) // Lista de orçamentos ativos
+  const [budgets, setBudgets] = useState([])
+  const [filteredBudgets, setFilteredBudgets] = useState([])
+  const [paymentFilter, setPaymentFilter] = useState('')
+  const [deliveryFilter, setDeliveryFilter] = useState('')
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -31,7 +36,12 @@ const Orders = () => {
     const fetchBudgets = async () => {
       try {
         const { data } = await api.get('/listar_pedidos')
-        setBudgets(data)
+        const budgetsWithStatus = data.map((budget) => ({
+          ...budget,
+        }))
+
+        setBudgets(budgetsWithStatus)
+        setFilteredBudgets(budgetsWithStatus)
       } catch (error) {
         console.error('Erro ao buscar orçamentos:', error)
       }
@@ -43,9 +53,46 @@ const Orders = () => {
 
   const getProductById = (id) => {
     return (
-      listProducts.find((product) => product.id === id).name ||
+      listProducts.find((product) => product.id === id)?.name ||
       'Produto não encontrado'
     )
+  }
+
+  const updateBudgetStatus = async (id, field, value) => {
+    try {
+      setBudgets((prev) =>
+        prev.map((budget) =>
+          budget.pedido.id === id ? { ...budget, [field]: value } : budget
+        )
+      )
+
+      console.log(id, field, value)
+
+      await api.put(`/atualizar_pedido/${id}`, {
+        [field]: value,
+      })
+
+      const { data } = await api.get('/listar_pedidos')
+      const budgetsWithStatus = data.map((budget) => ({
+        ...budget,
+      }))
+
+      setBudgets(budgetsWithStatus)
+      setFilteredBudgets(budgetsWithStatus)
+
+      console.log(`Status ${field} atualizado para: ${value}`)
+    } catch (error) {
+      console.error(`Erro ao atualizar ${field}:`, error)
+    }
+  }
+
+  const applyFilters = () => {
+    const filtered = budgets.filter(
+      (budget) =>
+        (!paymentFilter || budget.statusPagamento === paymentFilter) &&
+        (!deliveryFilter || budget.statusEntrega === deliveryFilter)
+    )
+    setFilteredBudgets(filtered)
   }
 
   return (
@@ -56,9 +103,29 @@ const Orders = () => {
         <Sidebar />
 
         <Box w="100%">
+          <Box mb="4">
+            <Flex gap="4">
+              <Select
+                placeholder="Filtrar por Status de Pagamento"
+                onChange={(e) => setPaymentFilter(e.target.value)}
+              >
+                <option value="AGUARDANDO">AGUARDANDO PGMT</option>
+                <option value="PAGO">PAGO</option>
+              </Select>
+              <Select
+                placeholder="Filtrar por Status de Entrega"
+                onChange={(e) => setDeliveryFilter(e.target.value)}
+              >
+                <option value="AGUARDANDO">AGUARDANDO</option>
+                <option value="ENTREGUE">ENTREGUE</option>
+                <option value="RETIRADO">RETIRADO</option>
+              </Select>
+              <Button onClick={applyFilters}>Aplicar Filtros</Button>
+            </Flex>
+          </Box>
           <Box mt="8">
             <SimpleGrid columns={2} spacing={6}>
-              {budgets.map((budget) => (
+              {filteredBudgets.map((budget) => (
                 <Box key={budget.pedido.id} p="4" shadow="md" borderWidth="1px">
                   <Flex
                     justifyContent="space-between"
@@ -88,6 +155,35 @@ const Orders = () => {
                       ))}
                     </Tbody>
                   </Table>
+                  <Flex mt="4" gap="4">
+                    <Select
+                      value={budget.statusPagamento}
+                      onChange={(e) =>
+                        updateBudgetStatus(
+                          budget.pedido.id,
+                          'statusPagamento',
+                          e.target.value
+                        )
+                      }
+                    >
+                      <option value="AGUARDANDO">AGUARDANDO PGMT</option>
+                      <option value="PAGO">PAGO</option>
+                    </Select>
+                    <Select
+                      value={budget.statusEntrega}
+                      onChange={(e) =>
+                        updateBudgetStatus(
+                          budget.pedido.id,
+                          'statusEntrega',
+                          e.target.value
+                        )
+                      }
+                    >
+                      <option value="AGUARDANDO">AGUARDANDO</option>
+                      <option value="ENTREGUE">ENTREGUE</option>
+                      <option value="RETIRADO">RETIRADO</option>
+                    </Select>
+                  </Flex>
                 </Box>
               ))}
             </SimpleGrid>

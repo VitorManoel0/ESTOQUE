@@ -26,6 +26,11 @@ const Orders = () => {
   const [listProducts, setListProducts] = useState([])
   const [budgets, setBudgets] = useState([])
 
+  // Novos campos
+  const [end_entrega, setEndEntrega] = useState('')
+  const [data_entrega, setDataEntrega] = useState('')
+  const [data_retirada, setDataRetirada] = useState('')
+
   useEffect(() => {
     const fetchClients = async () => {
       try {
@@ -98,12 +103,18 @@ const Orders = () => {
         product_id: item.product_id,
         amount: parseInt(item.amount),
       })),
+      end_entrega,
+      data_entrega,
+      data_retirada,
     }
 
     try {
       await api.post('/create_budget', newOrder)
       setClientId('0')
       setOrderItems([])
+      setEndEntrega('')
+      setDataEntrega('')
+      setDataRetirada('')
       const { data } = await api.get('/listar_budgets')
       setBudgets(data)
     } catch (error) {
@@ -155,13 +166,9 @@ const Orders = () => {
   }
 
   const getProductById = (id) => {
-    console.log(listProducts, 'a')
     const response =
-      listProducts.find((product) => product.id == id).name ||
+      listProducts.find((product) => product.id == id)?.name ||
       'Produto não encontrado'
-
-    console.log(response)
-
     return response
   }
 
@@ -210,7 +217,28 @@ const Orders = () => {
             </Button>
           </SimpleGrid>
 
-          <Box overflowY="auto" height="40vh">
+          {/* Novos campos */}
+          <SimpleGrid minChildWidth={240} h="fit-content" spacing="6" mt="6">
+            <Input
+              placeholder="Endereço de Entrega"
+              value={end_entrega}
+              onChange={(e) => setEndEntrega(e.target.value)}
+            />
+            <Input
+              placeholder="Data de Entrega"
+              type="date"
+              value={data_entrega}
+              onChange={(e) => setDataEntrega(e.target.value)}
+            />
+            <Input
+              placeholder="Data de Retirada"
+              type="date"
+              value={data_retirada}
+              onChange={(e) => setDataRetirada(e.target.value)}
+            />
+          </SimpleGrid>
+
+          <Box overflowY="auto" height="40vh" mt="6">
             <Table mt="6">
               <Thead>
                 <Tr>

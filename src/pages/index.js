@@ -22,13 +22,15 @@ const Produtos = () => {
   const [price, setPrice] = useState('')
   const [quantity, setQuantity] = useState(0)
   const [listProducts, setListProducts] = useState([])
-  const [editingProductId, setEditingProductId] = useState(null) // Armazena o ID do produto em edição
+  const [editingProductId, setEditingProductId] = useState(null)
+  const [replacement, setReplacement] = useState(0) 
   const [editFields, setEditFields] = useState({
     name: '',
     description: '',
     price: '',
     quantity: 0,
-  }) // Campos para edição
+    replacement: 0, 
+  })
 
   useEffect(() => {
     fetchProducts()
@@ -44,7 +46,7 @@ const Produtos = () => {
   }
 
   const handleNewProduct = async () => {
-    if (!name || !description || !price || !quantity) {
+    if (!name || !description || !price || !quantity || !replacement) {
       alert('Todos os campos são obrigatórios!')
       return
     }
@@ -55,13 +57,15 @@ const Produtos = () => {
         descricao: description,
         preco: parseFloat(price),
         quantidade: parseInt(quantity),
+        reposicao: parseInt(replacement),
       }
       const { data } = await api.post('/cadastrar_produto', newProduct)
-      // Limpa os campos
       setName('')
       setDescription('')
       setPrice('')
       setQuantity('')
+      setReplacement('')
+      fetchProducts()
     } catch (error) {
       console.error('Erro ao adicionar produto:', error)
     }
@@ -69,7 +73,7 @@ const Produtos = () => {
 
   const removeProduct = async (id) => {
     try {
-      await api.delete(`/apagar_produto?id=${id}`) // Usando ID como parâmetro
+      await api.delete(`/apagar_produto?id=${id}`)
       setListProducts(listProducts.filter((prod) => prod.id !== id))
     } catch (error) {
       console.error('Erro ao remover produto:', error)
@@ -84,32 +88,39 @@ const Produtos = () => {
       description: product.description,
       price: product.price,
       quantity: parseInt(product.quantity),
+      replacement: parseInt(product.replacement),
     })
   }
 
   const cancelEditing = () => {
     setEditingProductId(null)
-    setEditFields({ name: '', description: '', price: '', quantity: 0 })
+    setEditFields({
+      name: '',
+      description: '',
+      price: '',
+      quantity: 0,
+      replacement: 0,
+    })
   }
 
   const saveProduct = async (id) => {
-    fetchProducts()
     if (!id) {
       console.error('ID do produto não encontrado')
       return
     }
 
     try {
-      const newObject = {
+      const updatedProduct = {
         nome: editFields.name,
         descricao: editFields.description,
         preco: parseFloat(editFields.price),
         quantidade: parseInt(editFields.quantity),
+        reposicao: parseInt(editFields.replacement),
       }
 
-      console.log(newObject, 'newObject')
+      await api.put(`/editar_produto/${id}`, updatedProduct)
 
-      await api.put(`/editar_produto/${id}`, newObject)
+      fetchProducts()
 
       setListProducts(
         listProducts.map((prod) =>
@@ -120,10 +131,14 @@ const Produtos = () => {
                 description: editFields.description,
                 price: parseFloat(editFields.price),
                 quantity: parseInt(editFields.quantity),
+                replacement: parseInt(editFields.replacement),
               }
             : prod
         )
       )
+
+      console.log(listProducts)
+
       cancelEditing()
     } catch (error) {
       console.error('Erro ao salvar produto:', error)
@@ -155,6 +170,12 @@ const Produtos = () => {
               placeholder="Preço do produto"
             />
             <Input
+              value={replacement}
+              type="number"
+              onChange={(e) => setReplacement(e.target.value)}
+              placeholder="Reposição da Unidade"
+            />
+            <Input
               value={quantity}
               type="number"
               onChange={(e) => setQuantity(e.target.value)}
@@ -164,7 +185,6 @@ const Produtos = () => {
               CADASTRAR
             </Button>
           </SimpleGrid>
-
           <Box overflowY="auto" height="80vh">
             <Table mt="6">
               <Thead>
@@ -177,6 +197,9 @@ const Produtos = () => {
                   </Th>
                   <Th fontWeight="bold" fontSize="14px">
                     Preço
+                  </Th>
+                  <Th fontWeight="bold" fontSize="14px">
+                    Reposição
                   </Th>
                   <Th fontWeight="bold" fontSize="14px">
                     Qtd
@@ -226,6 +249,18 @@ const Produtos = () => {
                         </Td>
                         <Td>
                           <Input
+                            value={editFields.replacement}
+                            type="number"
+                            onChange={(e) =>
+                              setEditFields((prev) => ({
+                                ...prev,
+                                replacement: e.target.value,
+                              }))
+                            }
+                          />
+                        </Td>
+                        <Td>
+                          <Input
                             value={editFields.quantity}
                             type="number"
                             onChange={(e) =>
@@ -255,6 +290,11 @@ const Produtos = () => {
                         <Td color="gray.500">
                           {item.price !== undefined && item.price !== null
                             ? `R$ ${item.price.toFixed(2)}`
+                            : 'Preço não informado'}
+                        </Td>
+                        <Td color="gray.500">
+                          {item.replacement !== undefined && item.price !== null
+                            ? `R$ ${item.replacement.toFixed(2)}`
                             : 'Preço não informado'}
                         </Td>
                         <Td color="gray.500">{item.quantity}</Td>

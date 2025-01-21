@@ -218,7 +218,10 @@ const Usuarios = () => {
                           />
                         </Td>
                         <Td>
-                          <Button colorScheme="blue" onClick={() => saveUser(user.id)}>
+                          <Button
+                            colorScheme="blue"
+                            onClick={() => saveUser(user.id)}
+                          >
                             SALVAR
                           </Button>
                           <Button colorScheme="gray" onClick={cancelEditing}>
@@ -239,7 +242,10 @@ const Usuarios = () => {
                           >
                             EDITAR
                           </Button>
-                          <Button colorScheme="red" onClick={() => removeUser(user.id)}>
+                          <Button
+                            colorScheme="red"
+                            onClick={() => removeUser(user.id)}
+                          >
                             DELETAR
                           </Button>
                         </Td>
