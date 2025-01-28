@@ -109,7 +109,7 @@ const Orders = () => {
                 placeholder="Filtrar por Status de Pagamento"
                 onChange={(e) => setPaymentFilter(e.target.value)}
               >
-                <option value="AGUARDANDO">AGUARDANDO PGMT</option>
+                <option value="AGUARDANDO">AGUARDANDO PGTO</option>
                 <option value="PAGO">PAGO</option>
               </Select>
               <Select
@@ -166,7 +166,7 @@ const Orders = () => {
                         )
                       }
                     >
-                      <option value="AGUARDANDO">AGUARDANDO PGMT</option>
+                      <option value="AGUARDANDO">AGUARDANDO PGTO</option>
                       <option value="PAGO">PAGO</option>
                     </Select>
                     <Select

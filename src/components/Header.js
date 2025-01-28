@@ -4,6 +4,7 @@ import {
   HStack,
   Icon,
   IconButton,
+  Image,
   Text,
   useBreakpointValue,
 } from '@chakra-ui/react'
@@ -42,7 +43,12 @@ const Header = () => {
           mr="2"
         ></IconButton>
       )}
-      <Text>LOGO</Text>
+      <Image
+        src="/logo_meire.png"
+        alt="Company Logo"
+        h="8"
+        objectFit="contain"
+      />
       <Flex ml="auto">
         <HStack>
           <Text>Meire & Pinho locadora</Text>
