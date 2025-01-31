@@ -25,6 +25,8 @@ const Orders = () => {
   const [listClients, setListClients] = useState([])
   const [listProducts, setListProducts] = useState([])
   const [budgets, setBudgets] = useState([])
+  const [isEditing, setIsEditing] = useState(false)
+  const [currentBudgetId, setCurrentBudgetId] = useState(null)
 
   // Novos campos
   const [end_entrega, setEndEntrega] = useState('')
@@ -63,6 +65,23 @@ const Orders = () => {
     fetchProducts()
     fetchBudgets()
   }, [])
+
+  // Função para carregar os dados do orçamento no formulário
+  const handleEditBudget = (budget) => {
+    setIsEditing(true)
+    setCurrentBudgetId(budget.pedido.id)
+    setClientId(budget.pedido.client_id)
+    setEndEntrega(budget.pedido.end_entrega)
+    setDataEntrega(budget.pedido.data_entrega)
+    setDataRetirada(budget.pedido.data_retirada)
+
+    // Converter os itens para o formato do state
+    const items = budget.pedido.items.map((item) => ({
+      product_id: item.product_id.toString(),
+      amount: item.amount.toString(),
+    }))
+    setOrderItems(items)
+  }
 
   const handleAddItem = () => {
     if (!amount || product_id === '0') {
@@ -109,12 +128,21 @@ const Orders = () => {
     }
 
     try {
-      await api.post('/create_budget', newOrder)
+      if (isEditing) {
+        await api.put(`/update_budget/${currentBudgetId}`, {...newOrder, status: "ORCAMENTO"})
+      } else {
+        await api.post('/create_budget', newOrder)
+      }
+
       setClientId('0')
       setOrderItems([])
       setEndEntrega('')
       setDataEntrega('')
       setDataRetirada('')
+      setIsEditing(false)
+      setCurrentBudgetId(null)
+
+      // Atualizar lista
       const { data } = await api.get('/listar_budgets')
       setBudgets(data)
     } catch (error) {
@@ -149,7 +177,7 @@ const Orders = () => {
   }
 
   const handleApproveBudget = async (budgetId) => {
-    await api.patch(`/update_budget/${budgetId}`)
+    await api.put(`/update_budget/${budgetId}`)
     const { data } = await api.get('/listar_budgets')
     setBudgets(data)
   }
@@ -325,6 +353,39 @@ const Orders = () => {
                     >
                       Apagar
                     </Button>
+                    <Button
+                      size="sm"
+                      mr="2"
+                      colorScheme="blue"
+                      onClick={() => handleEditBudget(budget)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      mt="4"
+                      colorScheme="green"
+                      onClick={handleSaveOrder}
+                    >
+                      {isEditing ? 'ATUALIZAR ORÇAMENTO' : 'SALVAR PEDIDO'}
+                    </Button>
+
+                    {isEditing && (
+                      <Button
+                        mt="4"
+                        ml="2"
+                        onClick={() => {
+                          setIsEditing(false)
+                          setCurrentBudgetId(null)
+                          setClientId('0')
+                          setOrderItems([])
+                          setEndEntrega('')
+                          setDataEntrega('')
+                          setDataRetirada('')
+                        }}
+                      >
+                        Cancelar Edição
+                      </Button>
+                    )}
                   </Box>
                 </Box>
               ))}
