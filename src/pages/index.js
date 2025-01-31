@@ -20,16 +20,16 @@ const Produtos = () => {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
-  const [quantity, setQuantity] = useState(0)
+  const [quantity, setQuantity] = useState('')
   const [listProducts, setListProducts] = useState([])
   const [editingProductId, setEditingProductId] = useState(null)
-  const [replacement, setReplacement] = useState(0) 
+  const [replacement, setReplacement] = useState('')
   const [editFields, setEditFields] = useState({
     name: '',
     description: '',
     price: '',
-    quantity: 0,
-    replacement: 0, 
+    quantity: '',
+    replacement: '',
   })
 
   useEffect(() => {
@@ -82,13 +82,12 @@ const Produtos = () => {
 
   const startEditingProduct = (product) => {
     setEditingProductId(product.id)
-
     setEditFields({
       name: product.name,
       description: product.description,
-      price: product.price,
-      quantity: parseInt(product.quantity),
-      replacement: parseInt(product.replacement),
+      price: product.price.toString(),
+      quantity: product.quantity.toString(),
+      replacement: product.replacement.toString(),
     })
   }
 
@@ -98,8 +97,8 @@ const Produtos = () => {
       name: '',
       description: '',
       price: '',
-      quantity: 0,
-      replacement: 0,
+      quantity: '',
+      replacement: '',
     })
   }
 
@@ -119,26 +118,7 @@ const Produtos = () => {
       }
 
       await api.put(`/editar_produto/${id}`, updatedProduct)
-
       fetchProducts()
-
-      setListProducts(
-        listProducts.map((prod) =>
-          prod.id === id
-            ? {
-                ...prod,
-                name: editFields.name,
-                description: editFields.description,
-                price: parseFloat(editFields.price),
-                quantity: parseInt(editFields.quantity),
-                replacement: parseInt(editFields.replacement),
-              }
-            : prod
-        )
-      )
-
-      console.log(listProducts)
-
       cancelEditing()
     } catch (error) {
       console.error('Erro ao salvar produto:', error)
@@ -293,9 +273,9 @@ const Produtos = () => {
                             : 'Preço não informado'}
                         </Td>
                         <Td color="gray.500">
-                          {item.replacement !== undefined && item.price !== null
+                          {item.replacement !== undefined && item.replacement !== null
                             ? `R$ ${item.replacement.toFixed(2)}`
-                            : 'Preço não informado'}
+                            : 'Reposição não informada'}
                         </Td>
                         <Td color="gray.500">{item.quantity}</Td>
                         <Td textAlign="end">
