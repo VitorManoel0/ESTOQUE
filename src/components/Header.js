@@ -43,16 +43,15 @@ const Header = () => {
           mr="2"
         ></IconButton>
       )}
-      <Image
-        src="/logo_meire.png"
-        alt="Company Logo"
-        h="8"
-        objectFit="contain"
-      />
       <Flex ml="auto">
         <HStack>
           <Text>Meire & Pinho locadora</Text>
-          <Avatar size="md" name="Meire & Pinho locadora" />
+          <Image
+            src="/logo_meire.png"
+            alt="Company Logo"
+            h="8"
+            objectFit="contain"
+          />{' '}
         </HStack>
       </Flex>
     </Flex>
