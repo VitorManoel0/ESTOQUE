@@ -177,7 +177,7 @@ const Orders = () => {
   }
 
   const handleApproveBudget = async (budgetId) => {
-    await api.put(`/update_budget/${budgetId}`)
+    await api.put(`/change_budget_in_order/${budgetId}?status=aguardado`)
     const { data } = await api.get('/listar_budgets')
     setBudgets(data)
   }
@@ -245,27 +245,6 @@ const Orders = () => {
             </Button>
           </SimpleGrid>
 
-          {/* Novos campos */}
-          <SimpleGrid minChildWidth={240} h="fit-content" spacing="6" mt="6">
-            <Input
-              placeholder="Endereço de Entrega"
-              value={end_entrega}
-              onChange={(e) => setEndEntrega(e.target.value)}
-            />
-            <Input
-              placeholder="Data de Entrega"
-              type="date"
-              value={data_entrega}
-              onChange={(e) => setDataEntrega(e.target.value)}
-            />
-            <Input
-              placeholder="Data de Retirada"
-              type="date"
-              value={data_retirada}
-              onChange={(e) => setDataRetirada(e.target.value)}
-            />
-          </SimpleGrid>
-
           <Box overflowY="auto" height="40vh" mt="6">
             <Table mt="6">
               <Thead>
@@ -293,6 +272,28 @@ const Orders = () => {
               </Tbody>
             </Table>
           </Box>
+
+          {/* Novos campos */}
+          <SimpleGrid minChildWidth={240} h="fit-content" spacing="6" mt="6">
+            <Input
+              placeholder="Endereço de Entrega"
+              value={end_entrega}
+              onChange={(e) => setEndEntrega(e.target.value)}
+            />
+            <Input
+              placeholder="Data de Entrega"
+              type="date"
+              value={data_entrega}
+              onChange={(e) => setDataEntrega(e.target.value)}
+            />
+            <Input
+              placeholder="Data de Retirada"
+              type="date"
+              value={data_retirada}
+              onChange={(e) => setDataRetirada(e.target.value)}
+            />
+          </SimpleGrid>
+
 
           <Button mt="4" colorScheme="green" onClick={handleSaveOrder}>
             SALVAR PEDIDO
