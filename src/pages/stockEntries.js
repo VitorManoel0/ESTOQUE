@@ -130,18 +130,6 @@ const Orders = () => {
 
         <Box w="100%">
           <SimpleGrid minChildWidth={240} h="fit-content" spacing="6">
-            {/* Seleção do Cliente */}
-            <Select
-              value={client_id}
-              onChange={(e) => setClientId(e.target.value)}
-            >
-              <option value="0">Selecione um cliente</option>
-              {listClients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.nome}
-                </option>
-              ))}
-            </Select>
 
             {/* Seleção do Produto */}
             <Select
@@ -205,6 +193,19 @@ const Orders = () => {
               </Tbody>
             </Table>
           </Box>
+          
+          {/* Seleção do Cliente */}
+          <Select
+              value={client_id}
+              onChange={(e) => setClientId(e.target.value)}
+            >
+              <option value="0">Selecione um cliente</option>
+              {listClients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.nome}
+                </option>
+              ))}
+            </Select>
 
           {/* Botão para Salvar o Pedido */}
           <Button mt="4" colorScheme="green" onClick={handleSaveOrder}>

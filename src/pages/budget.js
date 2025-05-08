@@ -129,7 +129,7 @@ const Orders = () => {
 
     try {
       if (isEditing) {
-        await api.put(`/update_budget/${currentBudgetId}`, {...newOrder, status: "ORCAMENTO"})
+        await api.put(`/update_budget/${currentBudgetId}`, { ...newOrder, status: "ORCAMENTO" })
       } else {
         await api.post('/create_budget', newOrder)
       }
@@ -210,18 +210,6 @@ const Orders = () => {
         <Box w="100%">
           <SimpleGrid minChildWidth={240} h="fit-content" spacing="6">
             <Select
-              value={client_id}
-              onChange={(e) => setClientId(e.target.value)}
-            >
-              <option value="0">Selecione um cliente</option>
-              {listClients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.nome}
-                </option>
-              ))}
-            </Select>
-
-            <Select
               value={product_id}
               onChange={(e) => setProductId(e.target.value)}
             >
@@ -275,6 +263,18 @@ const Orders = () => {
 
           {/* Novos campos */}
           <SimpleGrid minChildWidth={240} h="fit-content" spacing="6" mt="6">
+            <Select
+              value={client_id}
+              onChange={(e) => setClientId(e.target.value)}
+            >
+              <option value="0">Selecione um cliente</option>
+              {listClients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.nome}
+                </option>
+              ))}
+            </Select>
+
             <Input
               placeholder="Endereço de Entrega"
               value={end_entrega}
