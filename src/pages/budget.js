@@ -10,6 +10,7 @@ import {
   Td,
   Th,
   Thead,
+  Text,
   Tr,
 } from '@chakra-ui/react'
 import React, { useEffect, useState } from 'react'
@@ -280,20 +281,28 @@ const Orders = () => {
               value={end_entrega}
               onChange={(e) => setEndEntrega(e.target.value)}
             />
-            <Input
-              placeholder="Data de Entrega"
-              type="date"
-              value={data_entrega}
-              onChange={(e) => setDataEntrega(e.target.value)}
-            />
-            <Input
-              placeholder="Data de Retirada"
-              type="date"
-              value={data_retirada}
-              onChange={(e) => setDataRetirada(e.target.value)}
-            />
           </SimpleGrid>
-
+          <SimpleGrid columns={2} spacing={4}>
+  <Box>
+    <Text mb={2} fontWeight="medium">Data de Entrega:</Text>
+    <Input
+      placeholder="Data de Entrega"
+      type="date"
+      value={data_entrega}
+      onChange={(e) => setDataEntrega(e.target.value)}
+    />
+  </Box>
+  
+  <Box>
+    <Text mb={2} fontWeight="medium">Data de Retirada:</Text>
+    <Input
+      placeholder="Data de Retirada"
+      type="date"
+      value={data_retirada}
+      onChange={(e) => setDataRetirada(e.target.value)}
+    />
+  </Box>
+</SimpleGrid>
 
           <Button mt="4" colorScheme="green" onClick={handleSaveOrder}>
             SALVAR PEDIDO
